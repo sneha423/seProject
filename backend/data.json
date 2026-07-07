@@ -1,0 +1,21 @@
+{
+  "users": [
+    {
+      "id": "638b47d7-85ff-4b52-92ef-6b986e1dc70f",
+      "name": "sneha gupta",
+      "email": "snehagupta.outlook@gmail.com",
+      "password": "snehabts",
+      "phone": "9876543459",
+      "gender": "female",
+      "community": "TestCorp",
+      "preferences": {
+        "womenOnly": false,
+        "communityOnly": false,
+        "verifiedOnly": true
+      },
+      "trustScore": 50
+    }
+  ],
+  "pools": [],
+  "feedbacks": []
+}

@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Users } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
@@ -41,7 +40,7 @@ const Login = () => {
       <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
         <div className="text-center mb-8">
           <div className="bg-indigo-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Users className="text-white" size={32} />
+            <span className="text-white text-3xl font-bold">R</span>
           </div>
           <h2 className="text-3xl font-bold text-gray-900">
             RideCircle SafeShare

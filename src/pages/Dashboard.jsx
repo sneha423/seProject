@@ -41,7 +41,7 @@ const Dashboard = () => {
       setPools(poolsData.pools || []);
       setFeedbacks(feedbackData.feedbacks || []);
     } catch (err) {
-      setError(err.message || "Failed to load dashboard data");
+      setError(err?.message || "Failed to load dashboard data");
     } finally {
       setLoading(false);
     }
@@ -101,6 +101,12 @@ const Dashboard = () => {
         {error && (
           <div className="mb-6">
             <ErrorMessage message={error} onRetry={loadDashboardData} />
+          </div>
+        )}
+
+        {!error && pools.length === 0 && feedbacks.length === 0 && (
+          <div className="mb-6 rounded-xl border border-dashed border-indigo-300 bg-white/80 p-4 text-sm text-gray-600">
+            No ride data is available yet. You can still create a pool or join one from the quick actions below.
           </div>
         )}
 

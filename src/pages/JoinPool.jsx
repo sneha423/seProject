@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Search } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -21,11 +21,7 @@ const JoinPool = () => {
     date: "",
   });
 
-  useEffect(() => {
-    loadPools();
-  }, []);
-
-  const loadPools = async () => {
+  const loadPools = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -53,7 +49,11 @@ const JoinPool = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user._id]);
+
+  useEffect(() => {
+    loadPools();
+  }, [loadPools]);
 
   const handleJoinPool = async (poolId) => {
     try {

@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Users } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { validateForm } from "../utils/validation";
 

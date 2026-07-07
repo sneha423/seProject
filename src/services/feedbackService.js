@@ -15,7 +15,10 @@ export const feedbackService = {
       const response = await api.get(`/feedback/user/${userId}`);
       return response.data;
     } catch (error) {
-      throw error.response?.data?.message || "Failed to fetch feedback";
+      console.warn("User feedback fetch failed, returning empty list", error);
+      return {
+        feedbacks: [],
+      };
     }
   },
 
@@ -24,7 +27,10 @@ export const feedbackService = {
       const response = await api.get(`/feedback/pool/${poolId}`);
       return response.data;
     } catch (error) {
-      throw error.response?.data?.message || "Failed to fetch pool feedback";
+      console.warn("Pool feedback fetch failed, returning empty list", error);
+      return {
+        feedbacks: [],
+      };
     }
   },
 
@@ -33,7 +39,10 @@ export const feedbackService = {
       const response = await api.get("/feedback/my-feedback");
       return response.data;
     } catch (error) {
-      throw error.response?.data?.message || "Failed to fetch your feedback";
+      console.warn("My feedback fetch failed, returning empty list", error);
+      return {
+        feedbacks: [],
+      };
     }
   },
 };

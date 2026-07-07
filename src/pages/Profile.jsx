@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Shield, Star, Users, AlertTriangle } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -27,11 +27,7 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    loadProfileData();
-  }, [user]);
-
-  const loadProfileData = async () => {
+  const loadProfileData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -58,10 +54,15 @@ const Profile = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    loadProfileData();
+  }, [loadProfileData]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    const fieldValue = type === "checkbox" ? checked : value;
 
     if (name.startsWith("preferences.")) {
       const prefName = name.split(".")[1];
@@ -69,13 +70,13 @@ const Profile = () => {
         ...formData,
         preferences: {
           ...formData.preferences,
-          [prefName]: checked,
+          [prefName]: fieldValue,
         },
       });
     } else {
       setFormData({
         ...formData,
-        [name]: value,
+        [name]: fieldValue,
       });
     }
   };

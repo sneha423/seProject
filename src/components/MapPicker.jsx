@@ -1,115 +1,107 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
-import { Loader } from "@googlemaps/js-api-loader";
-import { MapPin } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { MapContainer, TileLayer, CircleMarker, useMapEvents } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import { MapPin, Search } from "lucide-react";
 
-const MapPicker = ({
-  onLocationSelect,
-  defaultLocation,
-  label = "Select Location",
-}) => {
-  const mapRef = useRef(null);
-  const inputRef = useRef(null);
-  const [map, setMap] = useState(null);
-  const [marker, setMarker] = useState(null);
+const nominatimSearch = async (query) => {
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+    query
+  )}&limit=5&addressdetails=1`;
+  const response = await fetch(url, {
+    headers: {
+      "Accept-Language": "en",
+      "User-Agent": "ridecircle-client/1.0",
+    },
+  });
+  return response.json();
+};
+
+const nominatimReverse = async (lat, lng) => {
+  const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
+  const response = await fetch(url, {
+    headers: {
+      "Accept-Language": "en",
+      "User-Agent": "ridecircle-client/1.0",
+    },
+  });
+  return response.json();
+};
+
+const MapClickHandler = ({ onClick }) => {
+  useMapEvents({
+    click: (e) => {
+      onClick(e.latlng);
+    },
+  });
+  return null;
+};
+
+const MapPicker = ({ onLocationSelect, defaultLocation, label = "Select Location" }) => {
+  const [center, setCenter] = useState(defaultLocation || { lat: 30.7333, lng: 76.7794 });
   const [selectedLocation, setSelectedLocation] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const initializeMap = useCallback(async () => {
-    try {
-      const loader = new Loader({
-        apiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
-        version: "weekly",
-        libraries: ["places"],
-      });
-
-      await loader.load();
-
-      const center = defaultLocation || { lat: 30.7333, lng: 76.7794 }; // Chandigarh default
-
-      const mapInstance = new window.google.maps.Map(mapRef.current, {
-        center,
-        zoom: 13,
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: false,
-      });
-
-      const markerInstance = new window.google.maps.Marker({
-        map: mapInstance,
-        draggable: true,
-        position: center,
-      });
-
-      // Autocomplete
-      if (inputRef.current) {
-        const autocomplete = new window.google.maps.places.Autocomplete(
-          inputRef.current,
-          {
-            componentRestrictions: { country: "in" },
-            fields: ["formatted_address", "geometry", "name"],
-          }
-        );
-
-        autocomplete.bindTo("bounds", mapInstance);
-
-        autocomplete.addListener("place_changed", () => {
-          const place = autocomplete.getPlace();
-
-          if (!place.geometry || !place.geometry.location) {
-            setError("No details available for input: " + place.name);
-            return;
-          }
-
-          const location = {
-            address: place.formatted_address || place.name,
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng(),
-          };
-
-          mapInstance.setCenter(place.geometry.location);
-          mapInstance.setZoom(15);
-          markerInstance.setPosition(place.geometry.location);
-
-          setSelectedLocation(location);
-          onLocationSelect(location);
-        });
-      }
-
-      // Marker drag
-      markerInstance.addListener("dragend", () => {
-        const position = markerInstance.getPosition();
-        const geocoder = new window.google.maps.Geocoder();
-
-        geocoder.geocode({ location: position }, (results, status) => {
-          if (status === "OK" && results[0]) {
-            const location = {
-              address: results[0].formatted_address,
-              lat: position.lat(),
-              lng: position.lng(),
-            };
-
-            setSelectedLocation(location);
-            onLocationSelect(location);
-            if (inputRef.current) {
-              inputRef.current.value = results[0].formatted_address;
-            }
-          }
-        });
-      });
-      setMap(mapInstance);
-      setMarker(markerInstance);
-      setLoading(false);
-    } catch (err) {
-      console.error("Error loading map:", err);
-      setError("Failed to load map. Please check your API key.");
-      setLoading(false);
-    }
-  }, [defaultLocation, onLocationSelect]);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    initializeMap();
-  }, [initializeMap]);
+    if (defaultLocation) {
+      setCenter(defaultLocation);
+      setSelectedLocation(defaultLocation);
+    }
+  }, [defaultLocation]);
+
+  const handleSearch = async () => {
+    if (!query.trim()) {
+      setError("Enter a location to search.");
+      return;
+    }
+    setSearchLoading(true);
+    setError("");
+    try {
+      const data = await nominatimSearch(query);
+      if (!Array.isArray(data) || data.length === 0) {
+        setError("No results found. Try a different address.");
+        setResults([]);
+      } else {
+        setResults(data);
+      }
+    } catch (err) {
+      setError("Search failed. Please try again.");
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const selectResult = (result) => {
+    const location = {
+      address: result.display_name,
+      lat: parseFloat(result.lat),
+      lng: parseFloat(result.lon),
+    };
+    setSelectedLocation(location);
+    setCenter({ lat: location.lat, lng: location.lng });
+    setResults([]);
+    onLocationSelect(location);
+  };
+
+  const handleMapClick = async (latlng) => {
+    setError("");
+    try {
+      const data = await nominatimReverse(latlng.lat, latlng.lng);
+      const address = data.display_name || `Lat ${latlng.lat.toFixed(5)}, Lon ${latlng.lng.toFixed(5)}`;
+      const location = {
+        address,
+        lat: latlng.lat,
+        lng: latlng.lng,
+      };
+      setSelectedLocation(location);
+      setCenter({ lat: latlng.lat, lng: latlng.lng });
+      onLocationSelect(location);
+    } catch (err) {
+      setError("Unable to resolve the selected location. Please try again.");
+    }
+  };
 
   return (
     <div className="space-y-3">
@@ -117,31 +109,58 @@ const MapPicker = ({
         <MapPin size={16} className="inline mr-2" />
         {label}
       </label>
-      <input
-        ref={inputRef}
-        type="text"
-        placeholder="Search for a location..."
-        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-      />
-
-      {loading && (
-        <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center">
-          <p className="text-gray-500">Loading map...</p>
-        </div>
-      )}
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search for a location"
+          className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+        />
+        <button
+          type="button"
+          onClick={handleSearch}
+          className="px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+          disabled={searchLoading}
+        >
+          {searchLoading ? "Searching..." : <><Search size={16} className="inline mr-2" />Search</>}
+        </button>
+      </div>
 
       {error && (
-        <div className="w-full p-4 bg-red-50 text-red-600 rounded-lg">
+        <div className="w-full p-3 bg-red-50 text-red-700 rounded-lg text-sm">
           {error}
         </div>
       )}
 
-      <div
-        ref={mapRef}
-        className={`w-full h-96 rounded-lg border border-gray-300 ${
-          loading ? "hidden" : ""
-        }`}
-      />
+      {results.length > 0 && (
+        <div className="max-h-52 overflow-y-auto rounded-lg border border-gray-200 bg-white p-3 space-y-2">
+          {results.map((result) => (
+            <button
+              key={result.place_id}
+              type="button"
+              onClick={() => selectResult(result)}
+              className="w-full text-left px-3 py-2 rounded-lg hover:bg-indigo-50"
+            >
+              <span className="text-sm text-gray-800">{result.display_name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="w-full h-96 rounded-lg overflow-hidden border border-gray-300">
+        <MapContainer center={center} zoom={13} className="h-full w-full">
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          <MapClickHandler onClick={handleMapClick} />
+          {selectedLocation && (
+            <CircleMarker
+              center={[selectedLocation.lat, selectedLocation.lng]}
+              radius={10}
+              pathOptions={{ color: "#4338ca", fillColor: "#818cf8", fillOpacity: 1 }}
+            />
+          )}
+        </MapContainer>
+      </div>
 
       {selectedLocation && (
         <div className="p-3 bg-green-50 rounded-lg">
@@ -154,4 +173,5 @@ const MapPicker = ({
     </div>
   );
 };
+
 export default MapPicker;

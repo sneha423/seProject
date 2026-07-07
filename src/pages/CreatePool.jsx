@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
 import { poolService } from "../services/poolService";
 import Header from "../components/Header";
 import MapPicker from "../components/MapPicker";
@@ -9,7 +8,6 @@ import { getMinDate } from "../utils/dateUtils";
 
 const CreatePool = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [formData, setFormData] = useState({
     source: "",
     destination: "",
