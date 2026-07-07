@@ -214,14 +214,6 @@ app.get("/api/pools", authMiddleware, (req, res) => {
   res.json({ pools: filtered });
 });
 
-app.get("/api/pools/:poolId", authMiddleware, (req, res) => {
-  const pool = pools.find((p) => p._id === req.params.poolId);
-  if (!pool) {
-    return res.status(404).json({ message: "Pool not found" });
-  }
-  res.json({ pool });
-});
-
 app.get("/api/pools/my-pools", authMiddleware, (req, res) => {
   const myPools = pools.filter(
     (pool) =>
@@ -229,6 +221,14 @@ app.get("/api/pools/my-pools", authMiddleware, (req, res) => {
       pool.participants.some((participant) => participant._id === req.user.id)
   );
   res.json({ pools: myPools });
+});
+
+app.get("/api/pools/:poolId", authMiddleware, (req, res) => {
+  const pool = pools.find((p) => p._id === req.params.poolId);
+  if (!pool) {
+    return res.status(404).json({ message: "Pool not found" });
+  }
+  res.json({ pool });
 });
 
 app.post("/api/pools/:poolId/join", authMiddleware, (req, res) => {
