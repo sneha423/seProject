@@ -293,15 +293,6 @@ app.post("/api/pools/:poolId/leave", authMiddleware, (req, res) => {
   res.json({ success: true, pool });
 });
 
-app.get("/api/pools/my-pools", authMiddleware, (req, res) => {
-  const myPools = pools.filter(
-    (pool) =>
-      pool.createdBy?._id === req.user.id ||
-      pool.participants.some((participant) => participant._id === req.user.id)
-  );
-  res.json({ pools: myPools });
-});
-
 app.patch("/api/pools/:poolId/status", authMiddleware, (req, res) => {
   const pool = pools.find((p) => p._id === req.params.poolId);
   if (!pool) {

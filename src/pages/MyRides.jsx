@@ -148,6 +148,11 @@ const MyRides = () => {
                           {pool.participants?.length || 0} riders
                         </span>
                       </div>
+                      {pool.createdBy && (
+                        <div className="mt-3 text-sm text-gray-600">
+                          Created by: <span className="font-semibold text-gray-900">{pool.createdBy.name}</span>
+                        </div>
+                      )}
                     </div>
 
                     <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
@@ -225,6 +230,11 @@ const MyRides = () => {
                             Completed
                           </span>
                         </div>
+                        {pool.createdBy && (
+                          <div className="mt-3 text-sm text-gray-600">
+                            Created by: <span className="font-semibold text-gray-900">{pool.createdBy.name}</span>
+                          </div>
+                        )}
                       </div>
 
                       {!hasRated ? (

@@ -1,5 +1,13 @@
 import api from "./api";
 
+const getCurrentLocalUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem("user") || "null");
+  } catch {
+    return null;
+  }
+};
+
 export const poolService = {
   createPool: async (poolData) => {
     try {
@@ -7,14 +15,27 @@ export const poolService = {
       return response.data;
     } catch (error) {
       console.warn("Pool creation failed, using local fallback", error);
+      const currentUser = getCurrentLocalUser();
+      const creator = currentUser
+        ? {
+            _id: currentUser.id,
+            id: currentUser.id,
+            name: currentUser.name,
+            email: currentUser.email,
+            community: currentUser.community,
+            trustScore: currentUser.trustScore,
+          }
+        : null;
+
       return {
         success: true,
         pool: {
           ...poolData,
           _id: `local-${Date.now()}`,
           status: "upcoming",
-          participants: []
-        }
+          createdBy: creator,
+          participants: creator ? [creator] : [],
+        },
       };
     }
   },
