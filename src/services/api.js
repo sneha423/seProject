@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const API_BASE_URL = (() => {
-  const envUrl = process.env.REACT_APP_API_URL;
+  const rawEnvUrl = process.env.REACT_APP_API_URL;
+  const envUrl = rawEnvUrl ? rawEnvUrl.replace(/\/+$/, "") : "";
 
   if (process.env.NODE_ENV === "production") {
     if (!envUrl) {
@@ -9,10 +10,10 @@ const API_BASE_URL = (() => {
         "REACT_APP_API_URL must be defined for production builds."
       );
     }
-    return envUrl;
+    return `${envUrl}/api`;
   }
 
-  return envUrl || "http://localhost:5000/api";
+  return envUrl ? `${envUrl}/api` : "http://localhost:5000/api";
 })();
 
 const api = axios.create({
