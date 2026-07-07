@@ -30,6 +30,7 @@ const JoinPool = () => {
       // Filter out pools user is already in
       const availablePools = (response.pools || []).filter(
         (pool) =>
+          pool.createdBy?._id !== user._id &&
           !pool.participants.some((p) => p._id === user._id) &&
           pool.participants.length < pool.maxSeats
       );

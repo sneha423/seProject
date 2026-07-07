@@ -54,7 +54,27 @@ const saveData = () => {
   }
 };
 
+const isPoolExpired = (pool) => {
+  if (!pool.date || !pool.time) return false;
+  const scheduledTime = new Date(`${pool.date}T${pool.time}`);
+  if (Number.isNaN(scheduledTime.getTime())) return false;
+  return Date.now() >= scheduledTime.getTime() + 2 * 60 * 1000;
+};
+
+const refreshPoolStatuses = () => {
+  let changed = false;
+  pools.forEach((pool) => {
+    if (pool.status === "upcoming" && isPoolExpired(pool)) {
+      pool.status = "completed";
+      changed = true;
+    }
+  });
+  if (changed) saveData();
+};
+
 loadData();
+
+setInterval(refreshPoolStatuses, 60 * 1000);
 
 const authMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -196,11 +216,15 @@ app.post("/api/pools", authMiddleware, (req, res) => {
     trustScore: req.user.trustScore,
   };
 
+  const requestedParticipants = Array.isArray(req.body.participants)
+    ? req.body.participants.filter((participant) => participant._id !== creator._id)
+    : [];
+
   const pool = {
     _id: uuidv4(),
     ...req.body,
     createdBy: req.body.createdBy || creator,
-    participants: req.body.participants || [],
+    participants: [creator, ...requestedParticipants],
     status: "upcoming",
   };
   pools.push(pool);
